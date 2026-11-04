@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="booking-monitor">
+<title>Raport cen — {{ ov.apartment_name }} — {{ ov.cycle_id }}</title>
+<style>
+{{ css|safe }}
+</style>
+</head>
+<body>
+<div class="viz-root">
+<header class="page-header">
+  <p class="eyebrow">Monitor konkurencji Booking.com</p>
+  <h1>{{ ov.apartment_name }}</h1>
+  <p class="subtitle">
+    Cykl <strong>{{ ov.cycle_id }}</strong> · przyjazdy {{ ov.start_date|pldate }} – {{ last_checkin|pldate }}
+    · {{ ov.stay_nights|join('/') }} noce · {{ ov.adults }} dorosłych{% if ov.children %}, {{ ov.children }} dzieci{% endif %} · {{ ov.currency }}
+  </p>
+</header>
+
+{% if ov.status == 'blocked' %}
+<div class="banner banner-critical" role="alert">
+  <span class="banner-icon" aria-hidden="true">⛔</span>
+  <div><strong>Cykl zablokowany.</strong> Źródło zgłosiło blokadę lub CAPTCHA{% if ov.blocked_reason %} ({{ reason_labels.get(ov.blocked_reason, ov.blocked_reason) }}){% endif %}{% if ov.blocked_message %}: {{ ov.blocked_message }}{% endif %}.
+  Wznowienie wymaga ręcznej decyzji. Raport zawiera tylko zebrane dotąd dane.</div>
+</div>
+{% endif %}
+{% if ov.partial_quality %}
+<div class="banner banner-warning" role="status" id="partial-banner">
+  <span class="banner-icon" aria-hidden="true">⚠</span>
+  <div><strong>Raport częściowy — status cyklu: {{ status_label }}.</strong>
+  Wykonano {{ ds.executed }} z {{ ds.jobs_total }} pomiarów ({{ coverage }}%).
+  Brakujące, wygasłe i błędne pomiary opisuje zakładka „Stan danych”.</div>
+</div>
+{% endif %}
+
+<nav class="tabs" role="tablist" aria-label="Widoki raportu">
+  <button type="button" role="tab" data-tab="overview" aria-selected="true">Przegląd</button>
+  <button type="button" role="tab" data-tab="calendar" aria-selected="false">Kalendarz</button>
+  <button type="button" role="tab" data-tab="competitors" aria-selected="false">Konkurenci</button>
+  <button type="button" role="tab" data-tab="history" aria-selected="false">Historia</button>
+  <button type="button" role="tab" data-tab="datastate" aria-selected="false">Stan danych</button>
+</nav>
+
+<div class="filters" id="filters" hidden>
+  <label>Statystyka
+    <select id="f-stat"><option value="min">Minimum</option><option value="median">Mediana</option></select>
+  </label>
+  <label>Taryfa <select id="f-mode"></select></label>
+  <label>Wyżywienie <select id="f-meal"><option value="">Dowolne</option></select></label>
+  <label>Przedpłata <select id="f-prepay"><option value="">Dowolna</option></select></label>
+  <label>Konkurent <select id="f-comp"><option value="">Wszyscy</option></select></label>
+  <label>Noce <select id="f-nights"><option value="">Wszystkie</option></select></label>
+</div>
+<noscript><p class="note">Widoki Kalendarz, Konkurenci i Historia wymagają włączonego JavaScriptu. Pełne dane są też w pliku prices.csv.</p></noscript>
+
+<main>
+<section id="tab-overview" class="tab-panel" aria-label="Przegląd">
+  <div class="tiles">
+    <div class="tile"><div class="tile-label">Pokrycie pomiarów</div><div class="tile-value">{{ coverage }}%</div><div class="tile-note">{{ ds.executed }} z {{ ds.jobs_total }} zapytań wykonanych</div></div>
+    <div class="tile"><div class="tile-label">Porównywalne ceny</div><div class="tile-value">{{ ov.comparable_observations }}</div><div class="tile-note">z {{ ov.observations_total }} odczytanych stron · {{ ov.competitors_total }} konkurentów</div></div>
+    <div class="tile"><div class="tile-label">Błędy i braki</div><div class="tile-value">{{ ds.failed + ds.expired + ds.missing }}</div><div class="tile-note">{{ ds.failed|plural('błąd', 'błędy', 'błędów') }} · {{ ds.expired|plural('wygasły', 'wygasłe', 'wygasłych') }} · {{ ds.missing|plural('niewykonany', 'niewykonane', 'niewykonanych') }}</div></div>
+  </div>
+  <dl class="facts">
+    <dt>Status cyklu</dt><dd>{{ status_label }}</dd>
+    <dt>Czas odczytów</dt><dd>od {{ local(ov.oldest_observed_at) }} do {{ local(ov.newest_observed_at) }} ({{ report.timezone }}) — pełny cykl nie jest pomiarem jednoczesnym</dd>
+    <dt>Start i koniec cyklu</dt><dd>{{ local(ov.started_at) }} – {{ local(ov.finished_at) }}</dd>
+    <dt>Termin cyklu (slot)</dt><dd>{{ ov.cycle_date|pldate }} (slot {{ ov.schedule_slot }})</dd>
+    <dt>Wersje parsera</dt><dd>{{ ov.parser_versions|join(', ') or '—' }}</dd>
+    <dt>Kod i konfiguracja</dt><dd>{{ ov.code_sha or '—' }} · {{ ov.config_hash }}</dd>
+    <dt>Wygenerowano</dt><dd>{{ local(report.generated_at) }}</dd>
+  </dl>
+  <p class="note">Statystyki obejmują wyłącznie kompletne, porównywalne ceny z tego cyklu; każdy konkurent wnosi najwyżej jedną cenę. Mniej niż {{ report.small_sample_threshold }} cen oznaczamy jako małą próbę. Ceny z wcześniejszych cykli są oznaczone datą odczytu i nie uzupełniają statystyk.</p>
+</section>
+
+<section id="tab-calendar" class="tab-panel" aria-label="Kalendarz">
+  <p class="section-lead">Kolor: <span id="cal-metric-label">minimum średniej ceny za noc</span> — jedna skala dla wszystkich długości pobytu. Najedź na dzień lub zaznacz go klawiaturą, aby zobaczyć cenę pobytu i liczbę porównywalnych cen.</p>
+  <div class="legend" id="cal-legend"></div>
+  <div class="calendars" id="calendars"></div>
+  <details class="table-view">
+    <summary>Pokaż jako tabelę</summary>
+    <div class="table-wrap"><table id="cal-table"><thead><tr><th>Przyjazd</th><th class="num">Noce</th><th>Porównywalne ceny</th><th class="num">Min. cena pobytu</th><th class="num">Mediana ceny pobytu</th><th class="num">Min. za noc</th><th class="num">Mediana za noc</th></tr></thead><tbody></tbody></table></div>
+  </details>
+</section>
+
+<section id="tab-competitors" class="tab-panel" aria-label="Konkurenci">
+  <p class="section-lead" id="comp-count"></p>
+  <div class="table-wrap"><table id="comp-table"><thead><tr>
+    <th>Konkurent</th><th>Przyjazd</th><th class="num">Noce</th><th>Dostępność</th><th>Lokal</th><th class="num">Cena pobytu</th><th class="num">Średnio / noc</th><th>Taryfa</th><th>Anulowanie do</th><th>Wyżywienie</th><th>Przedpłata</th><th>Odczyt</th><th>Uwagi</th>
+  </tr></thead><tbody></tbody></table></div>
+</section>
+
+<section id="tab-history" class="tab-panel" aria-label="Historia">
+  <p class="section-lead">Zmiany najniższej porównywalnej ceny tego samego pobytu między cyklami (do {{ report.history_cycles|length }} ostatnich cykli). Każdy punkt ma własny czas odczytu.</p>
+  <p class="section-lead" id="history-count"></p>
+  <div class="table-wrap"><table id="history-table"><thead><tr>
+    <th>Konkurent</th><th>Przyjazd</th><th class="num">Noce</th><th>Ceny w kolejnych cyklach</th><th class="num">Zmiana vs poprzedni cykl</th>
+  </tr></thead><tbody></tbody></table></div>
+</section>
+
+<section id="tab-datastate" class="tab-panel" aria-label="Stan danych">
+  <h2>Pomiary w cyklu</h2>
+  <table class="compact">
+    <tbody>
+      <tr><th scope="row">Wszystkie zapytania</th><td class="num">{{ ds.jobs_total }}</td></tr>
+      <tr><th scope="row">Wykonane</th><td class="num">{{ ds.executed }}</td></tr>
+      <tr><th scope="row">Brakujące — oczekujące</th><td class="num">{{ ds.missing_pending }}</td></tr>
+      <tr><th scope="row">Brakujące — czekające na ponowienie</th><td class="num">{{ ds.missing_retry_wait }}</td></tr>
+      <tr><th scope="row">Brakujące — w trakcie</th><td class="num">{{ ds.missing_running }}</td></tr>
+      <tr><th scope="row">Wygasłe (przyjazd minął przed pomiarem)</th><td class="num">{{ ds.expired }}</td></tr>
+      <tr><th scope="row">Błędy</th><td class="num">{{ ds.failed }}</td></tr>
+      {% for reason, count in ds.failed_by_reason.items() %}
+      <tr class="sub"><th scope="row">{{ reason_labels.get(reason, reason) }}</th><td class="num">{{ count }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <h2>Wynik odczytanych stron</h2>
+  <table class="compact">
+    <tbody>
+      <tr><th scope="row">Porównywalna cena</th><td class="num">{{ ds.available_comparable }}</td></tr>
+      <tr><th scope="row">Niedostępne (jednoznaczny komunikat)</th><td class="num">{{ ds.unavailable }}</td></tr>
+      <tr><th scope="row">Nieporównywalne — niepełna cena</th><td class="num">{{ ds.non_comparable_partial_price }}</td></tr>
+      <tr><th scope="row">Nieporównywalne — brak pasującej oferty</th><td class="num">{{ ds.non_comparable_no_matching_offer }}</td></tr>
+      <tr><th scope="row">Nieporównywalne — inne (np. waluta)</th><td class="num">{{ ds.non_comparable_other }}</td></tr>
+    </tbody>
+  </table>
+  <h2>Pokrycie wg konkurenta</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Konkurent</th><th class="num">Zapytania</th><th class="num">Wykonane</th><th class="num">Porównywalne</th><th class="num">Błędy</th><th class="num">Wygasłe</th><th class="num">Brakujące</th></tr></thead>
+    <tbody>
+    {% for row in ds.per_competitor %}
+      <tr><td>{{ competitor_names.get(row.competitor_id, row.competitor_id) }}</td><td class="num">{{ row.total }}</td><td class="num">{{ row.completed }}</td><td class="num">{{ row.comparable }}</td><td class="num">{{ row.failed }}</td><td class="num">{{ row.expired }}</td><td class="num">{{ row.missing }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+</main>
+
+<div class="tooltip" id="tooltip" role="tooltip" hidden></div>
+<footer class="page-footer">Raport wygenerowany z zapisanych danych; jego otwarcie nie wykonuje odczytów Booking.com.</footer>
+</div>
+<script type="application/json" id="report-data">{{ data_json|safe }}</script>
+<script>
+{{ script|safe }}
+</script>
+</body>
+</html>
