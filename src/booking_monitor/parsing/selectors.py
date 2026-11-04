@@ -21,7 +21,10 @@ BLOCK_SELECTORS: tuple[str, ...] = (
     "#challenge-container",
     "#challenge-form",
 )
-# Słabe sygnały (np. skrypt CAPTCHA logowania na zwykłej stronie) — tylko bez tabeli.
+# Słabe sygnały — tylko na stronie bez tabeli dostępności i bez nagłówka obiektu.
+# Pilotaż E1: zwykła strona oferty ładuje integrację AWS WAF (skrypt *.awswaf.com,
+# `window.awsWafCookieDomainList`), więc te znaczniki same nie dowodzą blokady.
+# Prawdziwa strona wyzwania (HTTP 202) ma `#challenge-container` — sygnał silny.
 BLOCK_WEAK_SELECTORS: tuple[str, ...] = (
     "iframe[src*='captcha']",
     "script[src*='awswaf']",

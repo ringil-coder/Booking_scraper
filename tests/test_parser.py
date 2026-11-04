@@ -188,6 +188,56 @@ def test_block_pages(fixture: str) -> None:
     assert page.offers == ()
 
 
+# Struktura zaobserwowana w pilotażu E1 (odtworzona syntetycznie): zwykła strona oferty
+# ładuje integrację AWS WAF, a prawdziwa strona wyzwania (HTTP 202) ma #challenge-container.
+_WAF_INTEGRATION = (
+    "<script>function loadWaf(){var script=document.createElement('script');"
+    "script.src='https://example.edge.sdk.awswaf.com/x/y/challenge.js';"
+    "window.awsWafCookieDomainList = ['booking.com'];}</script>"
+)
+_PROPERTY_WITHOUT_DATES = f"""<html lang="pl"><head><title>Alfa, Warszawa</title>
+{_WAF_INTEGRATION}</head><body>
+<h2 id="hp_hotel_name">Alfa</h2>
+<input type="hidden" name="checkin" value="">
+<div data-testid="occupancy-config">2 dorosłych · 0 dzieci · 1 pokój</div>
+<div id="hp_availability_style_changes"><div class="bui-alert bui-alert--error">
+Wybierz daty, aby zobaczyć dostępność i ceny w obiekcie</div></div>
+</body></html>"""
+_WAF_CHALLENGE = """<html lang="en"><head><title></title>
+<script>window.awsWafCookieDomainList = ['booking.com'];</script>
+<script src="https://www.booking.com/__challenge_x/y/z/challenge.js"></script>
+</head><body><div id="challenge-container"></div>
+<script>AwsWafIntegration.getToken().then(() => { window.location.href = '/'; });</script>
+<noscript>In order to continue, we need to verify that you're not a robot.</noscript>
+</body></html>"""
+
+
+def test_waf_integration_script_on_property_page_is_not_a_block() -> None:
+    page = parse_property_page(_PROPERTY_WITHOUT_DATES)
+    assert page.technical_reason is TechnicalReason.PARSE_ERROR
+    assert page.property_name == "Alfa"
+    assert "bez dat pobytu" in (page.message or "")
+
+
+def test_waf_integration_script_with_table_is_not_a_block() -> None:
+    html = (FIXTURES / "available_multi.html").read_text(encoding="utf-8")
+    page = parse_property_page(html.replace("</head>", _WAF_INTEGRATION + "</head>", 1))
+    assert page.technical_reason is None
+    assert page.availability is Availability.AVAILABLE
+
+
+def test_waf_challenge_page_is_blocked() -> None:
+    page = parse_property_page(_WAF_CHALLENGE)
+    assert page.technical_reason is TechnicalReason.BLOCKED
+    assert "#challenge-container" in (page.message or "")
+
+
+def test_waf_script_without_property_content_is_blocked() -> None:
+    html = f"<html><head><title>Booking.com</title>{_WAF_INTEGRATION}</head><body></body></html>"
+    page = parse_property_page(html)
+    assert page.technical_reason is TechnicalReason.BLOCKED
+
+
 @pytest.mark.parametrize("fixture", ["changed_layout.html", "unreadable_price.html"])
 def test_changed_page_is_parse_error_not_unavailable(fixture: str) -> None:
     page = parse(fixture)

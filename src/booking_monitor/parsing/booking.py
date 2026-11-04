@@ -49,7 +49,7 @@ from booking_monitor.parsing.text import (
 )
 
 # Podnosić przy każdej zmianie logiki parsera lub selektorów.
-PARSER_VERSION = "booking-0.1.0"
+PARSER_VERSION = "booking-0.1.1"
 
 _INVISIBLE_TAGS = frozenset({"script", "style", "noscript", "template", "head"})
 _ROOM_TYPE_RE = re.compile(sel.ROOM_TYPE_PATTERN, re.IGNORECASE)
@@ -77,7 +77,9 @@ def parse_property_page(html: str, *, url: str | None = None) -> ParsedPage:
     }
     table = _first(soup, sel.AVAILABILITY_TABLE)
 
-    block = detect_block(soup, has_table=table is not None)
+    block = detect_block(
+        soup, has_table=table is not None, has_property=common["property_name"] is not None
+    )
     if block is not None:
         return ParsedPage(
             availability=Availability.UNKNOWN,
@@ -118,6 +120,9 @@ def parse_property_page(html: str, *, url: str | None = None) -> ParsedPage:
 
     detail = "tabela bez wierszy ofert" if table is not None else "brak tabeli dostępności"
     where = f" ({url})" if url else ""
+    if table is None and context.checkin is None and context.checkout is None:
+        # Pilotaż E1: Booking przekierował (301) na adres bez parametrów zapytania.
+        detail = "strona bez dat pobytu (Booking pominął parametry zapytania?), " + detail
     return _parse_error(context, f"{detail} i brak komunikatu o niedostępności{where}", common)
 
 
@@ -192,21 +197,26 @@ def _unique_field(soup: Tag, selectors: Iterable[str]) -> str | None:
 # --------------------------------------------------------------------------- blokada
 
 
-def detect_block(soup: BeautifulSoup, *, has_table: bool) -> str | None:
-    """Opis sygnału blokady/CAPTCHA albo None. Słabe sygnały tylko bez tabeli dostępności."""
+def detect_block(soup: BeautifulSoup, *, has_table: bool, has_property: bool = False) -> str | None:
+    """Opis sygnału blokady/CAPTCHA albo None.
+
+    Słabe sygnały (skrypty WAF, frazy) liczą się tylko na stronie bez treści oferty:
+    bez tabeli dostępności i bez nagłówka obiektu. Prawdziwa strona oferty Booking
+    ładuje integrację AWS WAF (`awsWafCookieDomainList`) — wynik pilotażu E1.
+    """
     title = fold(soup.title.get_text(" ") if soup.title else "")
     if keyword := contains_any(title, sel.BLOCK_TITLE_KEYWORDS):
         return f"tytuł strony: {keyword}"
     for selector in sel.BLOCK_SELECTORS:
         if soup.select_one(selector) is not None:
             return f"element {selector}"
+    if has_table or has_property:
+        return None
     for script in soup.find_all("script"):
         content = script.string or ""
         for marker in sel.BLOCK_SCRIPT_MARKERS:
             if marker in content:
                 return f"skrypt wyzwania {marker}"
-    if has_table:
-        return None
     for selector in sel.BLOCK_WEAK_SELECTORS:
         if soup.select_one(selector) is not None:
             return f"element {selector}"
