@@ -48,8 +48,20 @@ def test_repository_settings_are_valid():
     assert settings.schedule.enabled is False
 
 
-def test_repository_competitors_template_is_rejected():
+def test_repository_competitors_are_valid():
     text = (ROOT / "config" / "competitors.csv").read_text(encoding="utf-8")
+    competitors = parse_competitors(text)
+    assert competitors
+    assert "UZUPELNIJ" not in text
+    canonical = [c.canonical_url for c in competitors]
+    assert len(set(canonical)) == len(canonical)
+    for url in canonical:
+        assert url.startswith("https://www.booking.com/hotel/")
+        assert canonicalize_booking_url(url) == url
+
+
+def test_placeholder_competitor_is_rejected():
+    text = HEADER + "konkurent_a;Konkurent A;UZUPELNIJ_ADRES_BOOKING_A;;true\n"
     with pytest.raises(ConfigError) as excinfo:
         parse_competitors(text)
     assert all("UZUPELNIJ" in p for p in excinfo.value.problems)

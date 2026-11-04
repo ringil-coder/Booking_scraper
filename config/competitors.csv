@@ -1,3 +1,5 @@
 competitor_key;name;booking_url;unit_filter;enabled
-konkurent_a;Konkurent A;UZUPELNIJ_ADRES_BOOKING_A;;true
-konkurent_b;Konkurent B;UZUPELNIJ_ADRES_BOOKING_B;;true
+smart_apartment_ogrodowa;Smart Apartment Ogrodowa;https://www.booking.com/hotel/pl/smart-apartment-ogrodowa.pl.html;;true
+chlodna_22a_better_rental;Chłodna 22A Better Rental;https://www.booking.com/hotel/pl/chlodna-22a-better-rental.pl.html;;true
+oxygen_residence;Oxygen Residence;https://www.booking.com/hotel/pl/oxygen-residence.pl.html;;true
+varsovia_jaktorowska;Varsovia Apartments Jaktorowska;https://www.booking.com/hotel/pl/varsovia-apartments-jaktorowska.pl.html;;true
