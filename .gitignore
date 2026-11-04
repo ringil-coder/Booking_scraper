@@ -10,3 +10,4 @@ build/
 spike/output/
 diagnostics/
 report-out/
+.claude/worktrees/
