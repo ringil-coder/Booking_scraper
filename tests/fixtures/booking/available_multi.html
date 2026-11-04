@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<!-- SYNTETYCZNA PRÓBKA — nie pochodzi z booking.com. Odwzorowuje przypuszczalny układ
+     strony oferty (tabela #hprt-table, ukryte pola formularza, data-testid).
+     Do zastąpienia/uzupełnienia zanonimizowanymi próbkami z pilotażu E1.
+     Scenariusz: dwa lokale, taryfa bezzwrotna i z bezpłatnym odwołaniem, śniadanie wliczone
+     vs płatne, podatki wliczone, cena przekreślona i znaczek promocji. -->
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <title>Apartamenty Testowe Centrum, Kraków – aktualne ceny na rok 2026</title>
+  <script>var booking_env = { b_hotel_id: '1234567', b_selected_currency: 'PLN' };</script>
+</head>
+<body>
+  <header>
+    <button data-testid="header-currency-picker-trigger"><span>PLN</span></button>
+  </header>
+  <div id="onetrust-banner-sdk">
+    <p>Używamy plików cookie.</p>
+    <button id="onetrust-accept-btn-handler">Zaakceptuj</button>
+    <button id="onetrust-reject-all-handler">Odrzuć</button>
+  </div>
+  <form id="hotelpage_availform">
+    <input type="hidden" name="hotel_id" value="1234567">
+    <input type="hidden" name="checkin" value="2026-11-20">
+    <input type="hidden" name="checkout" value="2026-11-23">
+    <input type="hidden" name="group_adults" value="2">
+    <input type="hidden" name="group_children" value="0">
+    <input type="hidden" name="no_rooms" value="1">
+    <input type="hidden" name="selected_currency" value="PLN">
+    <button type="button" data-testid="date-display-field-start">pt., 20 lis 2026</button>
+    <button type="button" data-testid="date-display-field-end">pon., 23 lis 2026</button>
+    <button type="button" data-testid="occupancy-config">2 dorosłych · 0 dzieci · 1 pokój</button>
+  </form>
+  <h2 id="hp_hotel_name" class="pp-header__title">Apartamenty Testowe Centrum</h2>
+  <section id="availability_target">
+    <table id="hprt-table" class="hprt-table">
+      <thead>
+        <tr><th>Typ obiektu</th><th>Liczba gości</th><th>Cena za 3 noce</th><th>Twoje opcje</th><th>Wybierz</th></tr>
+      </thead>
+      <tbody>
+        <tr class="js-rt-block-row" data-block-id="123456701_900001_2_0_0">
+          <td class="hprt-table-cell hprt-table-cell-roomtype" rowspan="2">
+            <a class="hprt-roomtype-link" data-room-id="123456701" href="#RD123456701">
+              <span class="hprt-roomtype-icon-link">Apartament z 1 sypialnią</span>
+            </a>
+            <div class="hprt-facilities-block">45 m² · Aneks kuchenny · Balkon</div>
+          </td>
+          <td class="hprt-table-cell hprt-table-cell-occupancy">
+            <span class="c-occupancy-icons__adults"><i class="bicon-occupancy"></i><i class="bicon-occupancy"></i><i class="bicon-occupancy"></i><i class="bicon-occupancy"></i></span>
+            <span class="bui-u-sr-only">Maks. liczba osób: 4</span>
+          </td>
+          <td class="hprt-table-cell hprt-table-cell-price">
+            <div class="hprt-price-block">
+              <div class="bui-price-display__original">zł&nbsp;1&nbsp;200</div>
+              <div class="bui-price-display__value prco-text-nowrap-helper">zł&nbsp;1&nbsp;020</div>
+              <div class="prd-taxes-and-fees-under-price">Zawiera podatki i opłaty</div>
+              <span class="bui-badge">Okazja na ostatnią chwilę</span>
+            </div>
+          </td>
+          <td class="hprt-table-cell hprt-table-cell-conditions">
+            <ul class="hprt-conditions-bui">
+              <li class="bui-list__item">Bezzwrotna</li>
+              <li class="bui-list__item">Zapłać z wyprzedzeniem</li>
+            </ul>
+          </td>
+          <td class="hprt-table-cell hprt-table-cell-select"><select class="hprt-nos-select"><option value="0">0</option><option value="1">1</option></select></td>
+        </tr>
+        <tr class="js-rt-block-row" data-block-id="123456701_900002_2_0_0">
+          <td class="hprt-table-cell hprt-table-cell-occupancy">
+            <span class="bui-u-sr-only">Maks. liczba osób: 4</span>
+          </td>
+          <td class="hprt-table-cell hprt-table-cell-price">
+            <div class="hprt-price-block">
+              <div class="bui-price-display__value prco-text-nowrap-helper">zł&nbsp;1&nbsp;200</div>
+              <div class="prd-taxes-and-fees-under-price">Zawiera podatki i opłaty</div>
+            </div>
+          </td>
+          <td class="hprt-table-cell hprt-table-cell-conditions">
+            <ul class="hprt-conditions-bui">
+              <li class="bui-list__item">Śniadanie wliczone w cenę</li>
+              <li class="bui-list__item">Bezpłatne odwołanie do 23:59 18 listopada 2026</li>
+              <li class="bui-list__item">Nie wymaga przedpłaty – zapłać w obiekcie</li>
+            </ul>
+          </td>
+          <td class="hprt-table-cell hprt-table-cell-select"><select class="hprt-nos-select"><option value="0">0</option><option value="1">1</option></select></td>
+        </tr>
+        <tr class="js-rt-block-row" data-block-id="123456702_900003_2_0_0">
+          <td class="hprt-table-cell hprt-table-cell-roomtype" rowspan="1">
+            <a class="hprt-roomtype-link" data-room-id="123456702" href="#RD123456702">
+              <span class="hprt-roomtype-icon-link">Pokój dwuosobowy z łazienką</span>
+            </a>
+          </td>
+          <td class="hprt-table-cell hprt-table-cell-occupancy">
+            <span class="bui-u-sr-only">Maks. liczba osób: 2</span>
+          </td>
+          <td class="hprt-table-cell hprt-table-cell-price">
+            <div class="hprt-price-block">
+              <div class="bui-price-display__value prco-text-nowrap-helper">zł&nbsp;800</div>
+              <div class="prd-taxes-and-fees-under-price">Zawiera podatki i opłaty</div>
+            </div>
+          </td>
+          <td class="hprt-table-cell hprt-table-cell-conditions">
+            <ul class="hprt-conditions-bui">
+              <li class="bui-list__item">Doskonałe śniadanie za zł 45</li>
+              <li class="bui-list__item">Bezzwrotna</li>
+            </ul>
+          </td>
+          <td class="hprt-table-cell hprt-table-cell-select"><select class="hprt-nos-select"><option value="0">0</option><option value="1">1</option></select></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</body>
+</html>

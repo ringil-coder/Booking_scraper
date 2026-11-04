@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<!-- SYNTETYCZNA PRÓBKA — nie pochodzi z booking.com. Do weryfikacji w E1.
+     Scenariusz: podatki niewliczone podane łączną kwotą pod ceną („+ zł X podatków i opłat”)
+     oraz szczegóły „Nie zawiera: …” opisujące tę samą sumę (nie wolno doliczyć ich drugi raz). -->
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <title>Studio Testowe Stare Miasto – ceny</title>
+</head>
+<body>
+  <form>
+    <input type="hidden" name="hotel_id" value="7654321">
+    <input type="hidden" name="checkin" value="2026-11-20">
+    <input type="hidden" name="checkout" value="2026-11-23">
+    <input type="hidden" name="group_adults" value="2">
+    <input type="hidden" name="group_children" value="0">
+    <input type="hidden" name="no_rooms" value="1">
+    <input type="hidden" name="selected_currency" value="PLN">
+  </form>
+  <h2 class="pp-header__title">Studio Testowe Stare Miasto</h2>
+  <table id="hprt-table">
+    <tbody>
+      <tr class="js-rt-block-row" data-block-id="765432101_800001_2_0_0">
+        <td class="hprt-table-cell-roomtype" rowspan="2">
+          <a class="hprt-roomtype-link" data-room-id="765432101"><span class="hprt-roomtype-icon-link">Studio</span></a>
+        </td>
+        <td class="hprt-table-cell-occupancy"><span class="bui-u-sr-only">Maks. liczba osób: 2</span></td>
+        <td class="hprt-table-cell-price">
+          <div class="bui-price-display__value">zł 640</div>
+          <div class="prd-taxes-and-fees-under-price">+ zł 96 podatków i opłat</div>
+          <div class="hprt-taxinfo">Nie zawiera: Opłata miejscowa zł 4 za osobę za noc, 8% VAT</div>
+        </td>
+        <td class="hprt-table-cell-conditions"><ul><li>Bezzwrotna</li></ul></td>
+      </tr>
+      <tr class="js-rt-block-row" data-block-id="765432101_800002_2_0_0">
+        <td class="hprt-table-cell-occupancy"><span class="bui-u-sr-only">Maks. liczba osób: 2</span></td>
+        <td class="hprt-table-cell-price">
+          <div class="bui-price-display__value">zł 700</div>
+          <div class="prd-taxes-and-fees-under-price">+ zł 105 podatków i opłat</div>
+        </td>
+        <td class="hprt-table-cell-conditions">
+          <ul><li>Bezpłatne odwołanie przed 15 listopada 2026</li><li>Bez przedpłaty</li></ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>

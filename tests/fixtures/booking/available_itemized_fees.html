@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!-- SYNTETYCZNA PRÓBKA — nie pochodzi z booking.com. Do weryfikacji w E1.
+     Scenariusz: opłaty wyszczególnione bez kwoty łącznej — VAT procentowy wliczony,
+     opłata klimatyczna za osobę za noc i sprzątanie za pobyt niewliczone, kaucja zwrotna.
+     Kontekst odczytywany z pól rozdzielonych (dzień + rok-miesiąc), select i skryptu. -->
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <title>Apartament Deluxe Testowy – ceny</title>
+  <script>window.b_selected_currency = 'PLN'; var b_hotel_id = '5550001';</script>
+</head>
+<body>
+  <form>
+    <input type="hidden" name="checkin_monthday" value="20">
+    <input type="hidden" name="checkin_year_month" value="2026-11">
+    <input type="hidden" name="checkout_monthday" value="23">
+    <input type="hidden" name="checkout_year_month" value="2026-11">
+    <select name="group_adults"><option value="1">1</option><option value="2" selected>2</option></select>
+    <input type="hidden" name="group_children" value="0">
+    <input type="hidden" name="no_rooms" value="1">
+  </form>
+  <h2 class="pp-header__title">Apartament Deluxe Testowy</h2>
+  <table class="hprt-table">
+    <tbody>
+      <tr data-block-id="555000101_700001_2_0_0">
+        <td class="hprt-table-cell-roomtype">
+          <span class="hprt-roomtype-icon-link">Apartament Deluxe z widokiem na morze</span>
+        </td>
+        <td class="hprt-table-cell-occupancy">
+          <span class="c-occupancy-icons__adults"><i class="bicon-occupancy"></i><i class="bicon-occupancy"></i><i class="bicon-occupancy"></i></span>
+        </td>
+        <td class="hprt-table-cell-price">
+          <div class="bui-price-display__value">1&#8239;234,56&nbsp;zł</div>
+          <div class="hprt-taxinfo">Zawiera: 8% VAT. Nie zawiera: Opłata klimatyczna zł 2,50 za osobę za noc, Opłata za sprzątanie zł 150 za pobyt. Kaucja zwrotna w wysokości zł 500 jest pobierana przy zameldowaniu.</div>
+        </td>
+        <td class="hprt-table-cell-conditions">
+          <ul><li>Bezpłatne odwołanie do 23:59 1 grudnia 2026</li><li>Nie wymaga przedpłaty</li></ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>

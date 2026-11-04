@@ -1,0 +1,72 @@
+# Pilotaż E1 (PLAN_DZIALANIA.md): kilka odczytów Booking.com na runnerze GitHub.
+# Uruchamiany wyłącznie ręcznie. Wynik trafia do krótkotrwałego artefaktu (7 dni).
+name: Pilotaż (E1)
+
+on:
+  workflow_dispatch:
+    inputs:
+      competitors:
+        description: 'Klucze konkurentów oddzielone spacją albo "all"'
+        type: string
+        default: all
+      sample:
+        description: 'Liczba dat przyjazdu rozłożonych na horyzoncie'
+        type: string
+        default: '4'
+      nights:
+        description: 'Długości pobytu oddzielone spacją'
+        type: string
+        default: '2 3 4'
+
+permissions:
+  contents: read
+
+# Wspólna grupa z produkcyjnym zbieraniem: nigdy dwa źródła ruchu jednocześnie.
+concurrency:
+  group: booking-monitor-production
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Wymagaj prywatnego repozytorium
+        if: ${{ !github.event.repository.private }}
+        run: |
+          echo "::error::Repozytorium jest publiczne — wyniki pilotażu byłyby jawne (PLAN_DZIALANIA.md, B1)."
+          exit 1
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      - name: Zależności
+        run: uv sync --frozen
+
+      - name: Chromium
+        run: uv run playwright install --with-deps chromium
+
+      - name: Pilotaż
+        env:
+          COMPETITORS: ${{ inputs.competitors }}
+          SAMPLE: ${{ inputs.sample }}
+          NIGHTS: ${{ inputs.nights }}
+        run: |
+          read -ra competitors <<< "$COMPETITORS"
+          read -ra nights <<< "$NIGHTS"
+          args=()
+          for key in "${competitors[@]}"; do args+=(--competitor "$key"); done
+          uv run python spike/probe.py "${args[@]}" --sample "$SAMPLE" \
+            --nights "${nights[@]}" --out spike/output
+
+      - name: Artefakt
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pilotaz-${{ github.run_id }}
+          path: spike/output
+          retention-days: 7
+          if-no-files-found: warn

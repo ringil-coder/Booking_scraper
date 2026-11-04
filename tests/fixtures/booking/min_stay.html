@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<!-- SYNTETYCZNA PRÓBKA — nie pochodzi z booking.com. Do weryfikacji w E1.
+     Scenariusz: ograniczenie minimalnej długości pobytu (niedostępność, nie rezerwacja). -->
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <title>Apartamenty Testowe Centrum – ceny</title>
+</head>
+<body>
+  <form>
+    <input type="hidden" name="hotel_id" value="1234567">
+    <input type="hidden" name="checkin" value="2026-11-20">
+    <input type="hidden" name="checkout" value="2026-11-22">
+    <input type="hidden" name="group_adults" value="2">
+    <input type="hidden" name="group_children" value="0">
+    <input type="hidden" name="no_rooms" value="1">
+    <input type="hidden" name="selected_currency" value="PLN">
+  </form>
+  <h2 class="pp-header__title">Apartamenty Testowe Centrum</h2>
+  <section id="availability_target">
+    <div class="bui-alert bui-alert--error">
+      <p>Minimalna długość pobytu w tym obiekcie w wybranym terminie to 5 nocy.</p>
+    </div>
+  </section>
+</body>
+</html>
