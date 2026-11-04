@@ -1,0 +1,169 @@
+# Monitor konkurencji: gate → prepare → collect (macierz okien) → finalize (A§6–§8, A§13).
+#
+# Codzienna kontrola terminu jest krótka: bez przeglądarki i bez wejścia na Booking.
+# Zbieranie zapisuje wyłącznie gałąź danych `monitor-data`; kod na `main` jest tylko czytany.
+name: Monitor konkurencji
+
+on:
+  schedule:
+    - cron: '17 5 * * *' # musi być równe schedule.gate_cron_utc w config/settings.yaml
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'due = kontrola terminu, resume = wznów cykl, unblock = wznów cykl zablokowany'
+        type: choice
+        options: [due, resume, unblock]
+        default: due
+      confirm_unblock:
+        description: 'Potwierdzam, że sprawdziłem przyczynę blokady (wymagane dla unblock)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: booking-monitor-production
+  cancel-in-progress: false
+
+env:
+  PYTHONUNBUFFERED: '1'
+  UV_FROZEN: '1'
+
+jobs:
+  gate:
+    name: Kontrola terminu
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      action: ${{ steps.gate.outputs.action }}
+      new_slot: ${{ steps.gate.outputs.new_slot }}
+      cycle_date: ${{ steps.gate.outputs.cycle_date }}
+      unblock: ${{ steps.gate.outputs.unblock }}
+    steps:
+      - name: Wymagaj prywatnego repozytorium
+        if: ${{ !github.event.repository.private }}
+        run: |
+          echo "::error::Repozytorium jest publiczne — dane konkurencji i raporty byłyby jawne (PLAN_DZIALANIA.md, B1)."
+          exit 1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+      - run: uv sync --no-dev
+      - id: gate
+        name: Decyzja
+        run: >
+          uv run booking-monitor gate
+          --mode "${{ inputs.mode || 'due' }}"
+          --confirm-unblock "${{ inputs.confirm_unblock || false }}"
+
+  prepare:
+    name: Przygotowanie cyklu
+    needs: gate
+    if: contains(fromJSON('["start","resume","finalize"]'), needs.gate.outputs.action)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    outputs:
+      cycle_id: ${{ steps.prepare.outputs.cycle_id }}
+      code_sha: ${{ steps.prepare.outputs.code_sha }}
+      windows: ${{ steps.prepare.outputs.windows }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+      - run: uv sync --no-dev
+      - id: prepare
+        name: Manifest lub wznowienie
+        run: >
+          uv run booking-monitor prepare
+          --action "${{ needs.gate.outputs.action }}"
+          --new-slot "${{ needs.gate.outputs.new_slot }}"
+          --cycle-date "${{ needs.gate.outputs.cycle_date }}"
+          --unblock "${{ needs.gate.outputs.unblock }}"
+
+  collect:
+    name: Zbieranie (okno ${{ matrix.window }})
+    needs: prepare
+    if: needs.prepare.outputs.windows != '[]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300 # execution.job_timeout_minutes; budżet zbierania 240 min
+    permissions:
+      contents: write
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        window: ${{ fromJSON(needs.prepare.outputs.windows) }}
+    steps:
+      # Wznowienie korzysta z wersji kodu zapisanej w manifeście cyklu (A§13).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.prepare.outputs.code_sha || github.sha }}
+          fetch-depth: 1
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+      - run: uv sync --no-dev
+      - name: Cache przeglądarki
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+      - name: Chromium i biblioteki systemowe
+        run: uv run playwright install --with-deps chromium
+      - name: Okno robocze
+        run: >
+          uv run booking-monitor collect
+          --cycle-id "${{ needs.prepare.outputs.cycle_id }}"
+          --window "${{ matrix.window }}"
+          --diagnostics-dir diagnostics
+      - name: Diagnostyka (7 dni)
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: diagnostyka-${{ needs.prepare.outputs.cycle_id }}-okno-${{ matrix.window }}-${{ github.run_attempt }}
+          path: diagnostics/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  finalize:
+    name: Finalizacja i raport
+    needs: [prepare, collect]
+    if: always() && needs.prepare.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      ARTIFACT_NAME: raport-${{ needs.prepare.outputs.cycle_id }}-run${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.prepare.outputs.code_sha || github.sha }}
+          fetch-depth: 1
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+      - run: uv sync --no-dev
+      - name: Status cyklu i raport
+        run: >
+          uv run booking-monitor finalize
+          --cycle-id "${{ needs.prepare.outputs.cycle_id }}"
+          --out-dir report-out
+          --artifact-name "$ARTIFACT_NAME"
+      - name: Raport (30 dni)
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: report-out/
+          retention-days: 30
+          if-no-files-found: warn

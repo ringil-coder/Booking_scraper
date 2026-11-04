@@ -157,6 +157,14 @@ class StorageSettings(FrozenModel):
     report_artifact_retention_days: int = Field(default=30, ge=1)
     diagnostics_artifact_retention_days: int = Field(default=7, ge=1)
 
+    @field_validator("state_branch")
+    @classmethod
+    def _not_code_branch(cls, value: str) -> str:
+        # Workflow zbierający zapisuje wyłącznie gałąź danych, nigdy gałęzi kodu (A§13).
+        if value in {"main", "master"} or not re.fullmatch(r"[a-z0-9][a-z0-9._/-]*", value):
+            raise ValueError("state_branch musi być osobną gałęzią danych, np. monitor-data")
+        return value
+
 
 class Settings(FrozenModel):
     report_timezone: str = "Europe/Warsaw"

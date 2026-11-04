@@ -93,6 +93,8 @@ class CycleProgress(FrozenModel):
     finished_at: datetime | None = None
     batches: tuple[BatchRef, ...] = ()
     blocked: BlockInfo | None = None
+    # Źródło poprosiło o przerwę (HTTP 429 z długim Retry-After) — nie wchodzimy przed tą chwilą.
+    not_before: datetime | None = None
     windows_planned_total: int = 0
     # Podsumowanie liczby zadań wg statusu po ostatnim checkpointcie (informacyjnie).
     job_counts: dict[str, int] = Field(default_factory=dict)
