@@ -1,12 +1,12 @@
-# Architektura prywatnego monitora konkurencji dla jednego apartamentu
+# Architektura monitora konkurencji dla jednego apartamentu
 
-Aktualizacja: 04.11.2026. Docelowy model: prywatne repozytorium GitHub i pobieranie danych w GitHub Actions co 3 dni.
+Aktualizacja: 04.11.2026. Docelowy model: publiczne repozytorium GitHub (decyzja D1 z 04.11.2026) i pobieranie danych w GitHub Actions co 3 dni.
 
 ## 1. Cel i decyzje projektowe
 
 Aplikacja służy właścicielowi **jednego apartamentu** do obserwowania cen z jednej, ręcznie wskazanej listy konkurencyjnych ofert Booking.com. Co 3 dni rozpoczyna pełny cykl sprawdzania wszystkich dat przyjazdu w kolejnych 3 miesiącach dla pobytów na **2, 3 i 4 noce**. Zapisuje historię oraz przygotowuje raport cen i dostępności.
 
-**Rekomendacja: Python + Playwright + GitHub Actions, trwałe dane w osobnej gałęzi prywatnego repozytorium, SQLite jako odtwarzalna baza robocza i raporty HTML/CSV.** Cały kod, konfiguracja, testy i definicje automatyzacji znajdują się na GitHub. Pobieranie działa na runnerach GitHub i nie wymaga włączonego komputera właściciela.
+**Rekomendacja: Python + Playwright + GitHub Actions, trwałe dane w osobnej gałęzi repozytorium, SQLite jako odtwarzalna baza robocza i raporty HTML/CSV.** Cały kod, konfiguracja, testy i definicje automatyzacji znajdują się na GitHub. Pobieranie działa na runnerach GitHub i nie wymaga włączonego komputera właściciela.
 
 Dokument opisuje docelową architekturę. Przykłady konfiguracji i workflow są kontraktami do implementacji; aktualizacja tego pliku nie wdraża zmian w istniejącej aplikacji ani nie uruchamia zbierania danych.
 
@@ -14,7 +14,7 @@ Dokument opisuje docelową architekturę. Przykłady konfiguracji i workflow są
 |---|---|
 | Własny obiekt | Jeden apartament |
 | Konkurencja | Jedna lista adresów Booking.com |
-| Repozytorium | Prywatne; kod na domyślnej gałęzi `main` |
+| Repozytorium | Publiczne; kod na domyślnej gałęzi `main`. Konfiguracja, historia, logi i artefakty są jawne (§13) |
 | Wykonanie | GitHub Actions, runner Ubuntu, Chromium bez widocznego okna |
 | Częstotliwość | Nowy pełny cykl co 3 dni |
 | Zakres każdego cyklu | Wszystkie daty przyjazdu w ruchomych 3 miesiącach × 2/3/4 noce |
@@ -89,7 +89,7 @@ Widok najniższej ceny pokazuje warunki wybranej taryfy. Porównanie jednakowych
 
 ```mermaid
 flowchart TD
-    A[Prywatne repozytorium: kod i konfiguracja] --> G[GitHub Actions: kontrola terminu]
+    A[Publiczne repozytorium: kod i konfiguracja] --> G[GitHub Actions: kontrola terminu]
     S[(Gałąź monitor-data: stan i historia)] --> G
     G -->|Nowy cykl co 3 dni lub wznowienie| P[Planowanie zapytań i podział pracy]
     P --> W[Kolejne zadania Actions]
@@ -129,7 +129,7 @@ Raport powstaje z już zapisanych wyników. Jego pobranie lub otwarcie nie inicj
 | Logika i modele | Python, Pydantic |
 | Pobieranie | Playwright + Chromium w trybie headless |
 | Środowisko wykonania | GitHub-hosted Ubuntu; wersja obrazu przypięta w workflow |
-| Konfiguracja | YAML i CSV w prywatnym repozytorium |
+| Konfiguracja | YAML i CSV w repozytorium (jawne) |
 | Historia źródłowa | Małe, niezmienne partie JSONL skompresowane gzip na `monitor-data` |
 | Stan sterowania | JSON z wersją schematu, planem i identyfikatorami cykli |
 | Baza zapytań i analizy | SQLite odtwarzana z trwałych danych |
@@ -321,11 +321,11 @@ Podstawą jest sekcja dostępności konkretnego obiektu. Kwota „od” z ogóln
 - Porażka odświeżenia pozostawia starszą cenę z jej oryginalnym czasem. Nie nadajemy jej nowej daty.
 - Zmiana konfiguracji w trakcie cyklu nie modyfikuje manifestu. Nowy zakres obowiązuje od następnego cyklu.
 
-Próbki HTML i zrzuty błędów trafiają do krótkotrwałego artefaktu, domyślnie na 7 dni. Logi nie zawierają tokenów ani danych sesji. Pilotaż wykonujemy na docelowym runnerze GitHub, bo powodzenie lokalnego odczytu nie potwierdza działania w tym środowisku.
+Próbki HTML i zrzuty błędów trafiają do krótkotrwałego artefaktu, domyślnie na 7 dni. Logi nie zawierają tokenów ani danych sesji. Artefakty publicznego repozytorium są jawne, dlatego zapisany HTML przechodzi przez `redaction.scrub_html` (identyfikator sesji, token CSRF, etykiety śledzące), a adres strony zapisywany w historii — przez `redaction.scrub_url`. Pilotaż wykonujemy na docelowym runnerze GitHub, bo powodzenie lokalnego odczytu nie potwierdza działania w tym środowisku.
 
 ## 11. Raport i korzystanie z aplikacji
 
-Właściciel otwiera zakładkę **Actions** w prywatnym repozytorium i wybiera ostatni cykl. Podsumowanie pokazuje czas pomiarów, pokrycie, liczbę błędów i identyfikator artefaktu. Raport HTML i CSV pobiera do przeglądarki lub Excela.
+Właściciel otwiera zakładkę **Actions** w repozytorium i wybiera ostatni cykl. Podsumowanie pokazuje czas pomiarów, pokrycie, liczbę błędów i identyfikator artefaktu. Raport HTML i CSV pobiera do przeglądarki lub Excela.
 
 GitHub Actions uruchamia procesy okresowe; nie projektujemy go jako stałego serwera Streamlit. Raport HTML jest samodzielnym plikiem z osadzonymi danymi i zasobami, możliwym do otwarcia po pobraniu, bez zewnętrznych żądań. Opcjonalny Streamlit czyta pobraną bazę na komputerze właściciela.
 
@@ -446,13 +446,21 @@ booking-monitor/                      # gałąź main
 
 Domyślne uprawnienia to `contents: read`. Wyłącznie joby zapisujące checkpointy i stan otrzymują `contents: write` dla `GITHUB_TOKEN`. Repozytorium musi pozwalać na zapis do dedykowanej gałęzi danych. Kod nie korzysta z tokena do modyfikacji `main`. Jeśli zapis zostanie zablokowany, cykl nie jest oznaczany jako utrwalony.
 
-Akcje zewnętrzne przypinamy do zweryfikowanych commitów. Sekrety przechowujemy w GitHub Secrets; nie są potrzebne dane logowania do prywatnego konta Booking. Nie publikujemy prywatnych danych przez GitHub Pages — dostęp do wyników odbywa się przez prywatne repozytorium i jego artefakty.
+Akcje zewnętrzne przypinamy do zweryfikowanych commitów. Monitor nie potrzebuje sekretów ani danych logowania do Booking; gdyby kiedyś były potrzebne, trafiają wyłącznie do GitHub Secrets.
+
+Repozytorium jest **publiczne** (decyzja D1). Jawne są: konfiguracja z listą konkurentów, gałąź `monitor-data` z historią cen, logi oraz artefakty Actions (raporty i diagnostyka). Wynikają z tego zasady:
+
+- w konfiguracji nie umieszczamy danych osobowych ani sekretów;
+- HTML i adresy stron zapisujemy po usunięciu danych sesji (`redaction.py`, §10);
+- workflow wchodzące na Booking lub zapisujące stan (`collect.yml`, `spike.yml`) uruchamia wyłącznie harmonogram albo osoba z prawem zapisu (`workflow_dispatch`); PR z forka uruchamia tylko `ci.yml` z uprawnieniem do odczytu i bez zapisanych poświadczeń; żaden workflow nie używa `pull_request_target` ani `workflow_run` — pilnują tego testy statyczne;
+- reguły gałęzi (rulesets) blokują force-push i usunięcie `main` oraz `monitor-data`; na `monitor-data` nie ma wymogu PR, bo pisze tam `GITHUB_TOKEN`;
+- GitHub wyłącza zaplanowane workflow w repozytoriach publicznych po 60 dniach bez aktywności; po takiej przerwie trzeba sprawdzić stan harmonogramu.
 
 Raporty i stan zawierają identyfikatory `github.run_id`, próby workflow, cyklu, wersji parsera i kodu. Dzięki temu można odtworzyć pochodzenie konkretnej ceny.
 
 ## 14. Plan wdrożenia
 
-1. **Repozytorium i konfiguracja:** prywatny GitHub, jeden apartament, lista konkurentów, data bazowa harmonogramu, jawna inicjalizacja `monitor-data`.
+1. **Repozytorium i konfiguracja:** publiczne repozytorium GitHub, jeden apartament, lista konkurentów, data bazowa harmonogramu, jawna inicjalizacja `monitor-data`.
 2. **Pilotaż na GitHub Actions:** 2–3 oferty, kilka dat, wszystkie długości pobytu; ręczna kontrola około 20 odczytów, czasu p95 i zachowania źródła na runnerze.
 3. **Historia i wznowienia:** manifesty, partie wyników, checkpointy, odtwarzanie SQLite i kontynuacja na nowym runnerze.
 4. **Cykl co 3 dni:** kontrola terminu, podział na joby, blokada równoległych cykli oraz obsługa pominiętych wywołań.
@@ -474,6 +482,6 @@ Opcjonalne rozszerzenia: odczyt własnej oferty tym samym profilem, osobny profi
 9. Testy parsera rozróżniają dostępność, brak pasującej oferty, blokadę oraz zmianę strony. Weryfikacja rzeczywistych cen odbywa się na runnerze docelowym.
 10. Raport podaje czas odczytu, cykl, pokrycie i warunki porównania. Starsze ceny nie udają nowych pomiarów.
 11. Pełny pilotaż potwierdza ukończenie cyklu przed następnym terminem oraz akceptowalne wykorzystanie GitHub Actions.
-12. Wyniki można pobrać z prywatnego repozytorium i otworzyć bez działającego serwera aplikacji.
+12. Wyniki można pobrać z repozytorium (artefakty Actions) i otworzyć bez działającego serwera aplikacji.
 
 Do wdrożenia potrzebne są adresy konkurentów, profil gości własnego apartamentu, repozytorium GitHub i data pierwszego cyklu. Do aktualizacji samej architektury nie są one wymagane.

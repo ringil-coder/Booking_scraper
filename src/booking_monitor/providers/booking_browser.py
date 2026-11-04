@@ -29,6 +29,7 @@ from booking_monitor.parsing import parse_property_page
 from booking_monitor.parsing import selectors as sel
 from booking_monitor.providers.base import FetchError, PageSnapshot
 from booking_monitor.providers.urls import build_property_url
+from booking_monitor.redaction import scrub_html, scrub_url
 from booking_monitor.storage.state import CompetitorSnapshot
 
 if TYPE_CHECKING:
@@ -225,7 +226,7 @@ class BookingBrowserProvider:
         timings["total"] = self._clock() - started
         return PageSnapshot(
             requested_url=url,
-            final_url=page.url,
+            final_url=scrub_url(page.url),
             http_status=status,
             html=html,
             fetched_at=self._now(),
@@ -298,7 +299,8 @@ class BookingBrowserProvider:
         try:
             self._diagnostics_dir.mkdir(parents=True, exist_ok=True)
             html_path = base.with_suffix(".html")
-            html_path.write_text(self._page.content(), encoding="utf-8")
+            # Artefakty publicznego repozytorium: bez identyfikatora sesji i tokenów.
+            html_path.write_text(scrub_html(self._page.content()), encoding="utf-8")
             saved.append(str(html_path))
         except Exception:
             pass

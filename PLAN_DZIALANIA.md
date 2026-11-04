@@ -1,4 +1,4 @@
-# Plan działania — prywatny monitor konkurencji dla jednego apartamentu
+# Plan działania — monitor konkurencji dla jednego apartamentu
 
 Data: 04.11.2026. Podstawa: dokument architektury z 04.11.2026 (dalej „A§n” = sekcja n architektury).
 Plan dotyczy wdrożenia od zera — repozytorium `ringil-coder/Booking_scraper` nie zawiera jeszcze kodu.
@@ -8,13 +8,13 @@ Plan dotyczy wdrożenia od zera — repozytorium `ringil-coder/Booking_scraper` 
 Kolejność prac jest ułożona tak, aby **najpierw sprawdzić największe ryzyka**, a dopiero potem budować infrastrukturę:
 
 1. Czy Booking.com da się odczytać z runnera GitHub (adres IP centrum danych) bez blokad i z porównywalną ceną?
-2. Czy pełny cykl zmieści się w 72 godzinach i w budżecie minut GitHub Actions?
+2. Czy pełny cykl zmieści się w 72 godzinach? (Repozytorium jest publiczne, więc minuty Actions nie są kosztem — §3.)
 
 Względem A§14 zmieniam jedną rzecz: **krótki pilotaż techniczny (etap E1) odbywa się przed budową kolejki, checkpointów i raportów** i kończy się decyzją GO/NO-GO. Pozostałe etapy odpowiadają A§14. Tylko je rozdrabniam na zadania z wynikami i testami.
 
 | Etap | Cel | Wynik | Bramka | Szacunek* |
 |---|---|---|---|---|
-| E0 | Repozytorium, szkielet, CI | Prywatne repo, zielone CI | Repo prywatne | 0,5–1 dnia |
+| E0 | Repozytorium, szkielet, CI | Publiczne repo z regułami gałęzi, zielone CI | CI zielone | 0,5–1 dnia |
 | E1 | Pilotaż techniczny na runnerze | Pomiary czasu, jakości i blokad, próbki HTML | **GO/NO-GO** | 2–3 dni |
 | E2 | Rdzeń domenowy offline | Konfiguracja, daty, harmonogram, ceny + testy | Testy zielone | 3–4 dni |
 | E3 | Odczyt Booking, parser, normalizacja | `providers/`, `parsing/`, `normalization` | Testy na próbkach | 4–6 dni |
@@ -29,8 +29,8 @@ Względem A§14 zmieniam jedną rzecz: **krótki pilotaż techniczny (etap E1) o
 
 | # | Ustalenie (stan na 04.11.2026) | Konsekwencja |
 |---|---|---|
-| B1 | Repozytorium jest **publiczne** i puste. | Architektura wymaga repozytorium prywatnego. W repozytorium publicznym lista konkurentów, gałąź `monitor-data`, logi i artefakty Actions byłyby jawne. **Przed dodaniem konfiguracji i przed pierwszym uruchomieniem Booking trzeba zmienić widoczność na prywatną.** |
-| B2 | Po zmianie na prywatne minuty Actions zaczną być liczone w limicie konta. | Budżet trzeba ustalić przed E1 (decyzja D2). |
+| B1 | Repozytorium jest **publiczne**. | Rozstrzygnięte decyzją D1 (04.11.2026): zostaje publiczne. Jawne są lista konkurentów, gałąź `monitor-data` z historią cen, logi i artefakty Actions. Środki ostrożności: R8–R10. |
+| B2 | Minuty Actions w repozytorium publicznym. | Standardowe runnery w repozytoriach publicznych są według dokumentacji GitHub bezpłatne (do potwierdzenia na stronie rozliczeń). D2 traci znaczenie kosztowe; ograniczeniem zostaje czas cyklu (72 h). |
 | B3 | Brak `ARCHITEKTURA.md` w repozytorium. | Dodać w E0 jako dokument źródłowy. |
 | B4 | Nazwa repozytorium (`Booking_scraper`) różni się od nazwy z A§13 (`booking-monitor`). | Zostawiamy nazwę repozytorium, pakiet Pythona to `booking_monitor`. Nic więcej nie trzeba zmieniać. |
 
@@ -38,8 +38,8 @@ Względem A§14 zmieniam jedną rzecz: **krótki pilotaż techniczny (etap E1) o
 
 | ID | Decyzja | Rekomendacja | Potrzebna przed |
 |---|---|---|---|
-| D1 | Widoczność repozytorium | Prywatne (wymóg A§1). | E0 |
-| D2 | Plan GitHub i limit wydatków na Actions | Ustawić limit wydatków w ustawieniach rozliczeń przed E1. Plan dobrać po pomiarach z E1 (patrz §3). | E1 |
+| D1 | Widoczność repozytorium | **Publiczne** — decyzja właściciela z 04.11.2026 (zmiana względem pierwotnego A§1). | ✅ |
+| D2 | Plan GitHub i limit wydatków na Actions | Przy repozytorium publicznym bez znaczenia kosztowego (B2). Limit wydatków zostawić na 0 USD, żeby nic płatnego nie uruchomiło się przypadkiem. | — |
 | D3 | Profil gości (dorośli, dzieci) | Dopasować do własnego apartamentu; domyślnie 2 dorosłych. | E3 |
 | D4 | Lista konkurentów | 2–3 adresy na E1; pełna lista przed E7. | E1 / E7 |
 | D5 | „2/3/4 dni” = 2/3/4 noce | Potwierdzić (domyślnie noce, A§2). | E2 |
@@ -60,7 +60,7 @@ Wzór z A§7: `pomiary = C × ~92 daty × 3 długości`. Minuty na cykl to `pomi
 
 Codzienna kontrola terminu bez pracy kosztuje około 1–2 min dziennie.
 
-Według dokumentacji rozliczeń GitHub plan Free obejmuje dla repozytoriów prywatnych 2 000 min/mies., a plan Pro 3 000 min/mies. Według źródeł zewnętrznych nadwyżka na standardowym runnerze Linux kosztuje około 0,006 USD/min od stycznia 2026. **Obie wartości trzeba zweryfikować na stronie rozliczeń GitHub przed D2.** Wniosek orientacyjny: już 5 konkurentów przekracza limit planu Free, a 20 konkurentów to rząd 9–18 tys. minut miesięcznie. Plan i liczbę konkurentów należy więc dobrać po zmierzeniu `t` w E1.
+Repozytorium jest publiczne (D1), a standardowe runnery w repozytoriach publicznych są według dokumentacji GitHub bezpłatne (do potwierdzenia na stronie rozliczeń). Minuty z tabeli nie są więc kosztem, ale nadal wyznaczają **czas cyklu**: musi się zmieścić w 72 h, z zapasem (kryterium E1: p95 ≤ 48 h). Przy prywatnym repozytorium obowiązywałby limit planu (Free: 2 000 min/mies.), który przekracza już 5 konkurentów. Liczbę konkurentów dobieramy po zmierzeniu `t` w E1.
 
 ## 4. Ryzyka krytyczne
 
@@ -72,7 +72,10 @@ Według dokumentacji rozliczeń GitHub plan Free obejmuje dla repozytoriów pryw
 | R4 | Zmiany strony Booking psują selektory. | Stale | Selektory w jednym miejscu, `PARSER_VERSION`, testy na próbkach. Pięć kolejnych `parse_error` zatrzymuje serię (A§10). |
 | R5 | Cena z runnera spoza Polski różni się od ceny widocznej u właściciela. | E1 (~20 odczytów ręcznie) | Zapisujemy profil i środowisko (A§2). Przy istotnych różnicach — decyzja o środowisku. |
 | R6 | Przyrost repozytorium: około 100+ partii na cykl, ponad 10 tys. plików rocznie. | E7 i później | Monitorowanie rozmiaru. Opcjonalne łączenie partii zakończonych cykli albo magazyn obiektowy (A§8). |
-| R7 | Ochrona gałęzi i reguły (rulesets) dla repozytoriów **prywatnych** wymagają płatnego planu GitHub. | E0 | Na planie Free: push tylko jawnym refspec do `monitor-data` oraz test CI sprawdzający to statycznie (E5). |
+| R7 | Przypadkowe nadpisanie lub usunięcie `main` albo `monitor-data`. | E0 | Repozytorium publiczne ma reguły gałęzi (rulesets) także na planie Free: dla `main` i `monitor-data` blokada force-push i usunięcia. Na `monitor-data` **bez** wymogu PR — tam pisze `GITHUB_TOKEN`. Dodatkowo push tylko jawnym refspec i test statyczny (E5). |
+| R8 | Jawność danych w publicznym repozytorium: lista konkurentów, historia cen, logi, raporty i diagnostyka (kopie stron Booking na 7 dni). | Stale | W konfiguracji żadnych danych osobowych ani sekretów. Zapisany HTML i adres strony przechodzą przez `redaction.py` (bez identyfikatora sesji, tokenów CSRF i etykiet śledzących). Kopie stron w artefaktach wchodzą w zakres decyzji D9 (R3). |
+| R9 | GitHub wyłącza zaplanowane workflow w repozytoriach publicznych po 60 dniach bez aktywności w repozytorium. Czy liczą się commity bota na `monitor-data` — do sprawdzenia. | E7, potem stale | GitHub wysyła e-mail; włączenie jednym kliknięciem (Actions → „Monitor konkurencji” → Enable workflow). Przy przerwie > 60 dni sprawdzić stan harmonogramu. |
+| R10 | Każdy może otworzyć PR z forka. | E0, E5 | `collect.yml` i `spike.yml` mają tylko `schedule` i `workflow_dispatch`; żaden workflow nie używa `pull_request_target` ani `workflow_run`; CI dla PR tylko do odczytu, bez zapisanych poświadczeń — pilnują tego testy statyczne. W ustawieniach Actions: zatwierdzanie workflow z PR od zewnętrznych współtwórców. |
 
 ## 5. Zasady implementacyjne przyjęte w planie
 
@@ -87,19 +90,21 @@ Według dokumentacji rozliczeń GitHub plan Free obejmuje dla repozytoriów pryw
 
 ### E0. Repozytorium i szkielet (0,5–1 dnia)
 
-- [ ] Zmienić widoczność repozytorium na prywatną (D1, bloker B1).
-- [ ] Ustawić limit wydatków na Actions (D2).
+- [x] Widoczność repozytorium: publiczne (D1, 04.11.2026).
+- [ ] Limit wydatków na Actions zostawić na 0 USD (D2).
+- [ ] Reguły gałęzi (R7): `main` i `monitor-data` — blokada force-push i usunięcia.
+- [ ] Ustawienia Actions (R10): zatwierdzanie workflow z PR od zewnętrznych współtwórców.
 - [ ] Dodać `ARCHITEKTURA.md`, `README.md` i ten plan.
 - [ ] `pyproject.toml` (Python 3.12), `uv.lock`, układ katalogów z A§13 i pusty `cli.py`.
 - [ ] Narzędzia: `pytest`, `ruff`, opcjonalnie `mypy`; zależności: `pydantic`, `pyyaml`, `playwright`, `jinja2`, `python-dateutil`, `time-machine` (testy).
 - [ ] `.github/workflows/ci.yml`: `uv sync --frozen`, `ruff`, `pytest`, bez instalacji przeglądarki. Uruchamiany przy push do `main` i przy PR.
 - [ ] Ustawienia repozytorium: domyślne uprawnienia workflow tylko do odczytu; retencja artefaktów zgodna z A§8.
 
-**Wynik:** prywatne repozytorium z zielonym CI.
+**Wynik:** publiczne repozytorium z regułami gałęzi i zielonym CI.
 
 ### E1. Pilotaż techniczny na runnerze GitHub — bramka GO/NO-GO (2–3 dni)
 
-Wymaga zakończonego D1 (artefakty z odczytami nie mogą być publiczne) oraz D2, D4 i D9.
+Wymaga D4 i D9. Repozytorium jest publiczne, więc artefakt pilotażu jest jawny (R8).
 
 - [ ] Skrypt `spike/probe.py`: Chromium headless, kontekst `pl-PL`, strefa `Europe/Warsaw`, profil desktop. Otwiera ofertę z parametrami dat, gości, waluty i języka, obsługuje baner zgód (odrzuca opcjonalne), czeka na sekcję dostępności albo komunikat. Zapisuje HTML, zrzut ekranu i czasy etapów.
 - [ ] Workflow `spike.yml` (tylko `workflow_dispatch`): 2–3 oferty × 3–4 daty × 2/3/4 noce, czyli około 20–36 odczytów, z odstępem 10 s. Artefakt przechowywany 7 dni.
@@ -114,7 +119,7 @@ Wymaga zakończonego D1 (artefakty z odczytami nie mogą być publiczne) oraz D2
 - co najmniej 95% odczytów bez błędu technicznego;
 - ceny zgodne z kontrolą ręczną albo różnice wyjaśnione (np. podatek wliczony lub niewliczony);
 - czas cyklu wyliczony z p95 nie przekracza około 48 h (zapas do 72 h);
-- koszt mieści się w budżecie D2.
+- przy repozytorium publicznym minuty nie są kosztem (B2); liczy się czas cyklu z poprzedniego punktu.
 
 **NO-GO:** zmniejszenie zakresu albo zmiana środowiska wykonania. Do tego etapu nie powstaje kod infrastruktury, który trzeba by wyrzucić.
 
@@ -195,6 +200,7 @@ Wymaga zakończonego D1 (artefakty z odczytami nie mogą być publiczne) oraz D2
 - [ ] Testy CI:
   - zgodność `gate_cron_utc` z cronem w `collect.yml`;
   - statyczny test, że workflow pushuje wyłącznie do `monitor-data` (R7);
+  - statyczne testy wyzwalaczy bezpiecznych w publicznym repozytorium (R10);
   - pełny cykl offline z fałszywym providerem: przerwanie, wznowienie, wygaśnięcie, `blocked`, brak duplikatów prób.
 
 **Pokrywa:** A§15 pkt 3, 4, 5 i 7.
@@ -278,13 +284,13 @@ Propozycje do naniesienia w `ARCHITEKTURA.md` po akceptacji:
 5. Płytkie pobieranie `monitor-data` (P5) i ewentualne łączenie partii zakończonych cykli (R6).
 6. Kanonikalizacja adresów Booking jako warunek deduplikacji (E2).
 7. Parser oparty na zrzucie DOM (P2).
-8. Ograniczenie ochrony gałęzi w prywatnym repozytorium na planie Free (R7).
+8. Repozytorium publiczne (D1): jawność danych, czyszczenie HTML z danych sesji, reguły gałęzi i bezpieczne wyzwalacze (R7–R10). Naniesione w `ARCHITEKTURA.md` 04.11.2026.
 
 ## 10. Najbliższe kroki
 
-1. Zmienić widoczność repozytorium na prywatną (B1) i ustawić limit wydatków na Actions (D2).
-2. Podjąć decyzję D9 i przekazać 2–3 adresy konkurentów oraz profil gości (D3, D4).
-3. Wykonać E0, a potem od razu E1 — wynik pilotażu przesądza o dalszym zakresie i koszcie.
+1. Ustawić reguły gałęzi i zatwierdzanie workflow z forków (R7, R10).
+2. Podjąć decyzję D9 i potwierdzić profil gości (D3). Lista konkurentów (D4): 4 oferty w `config/competitors.csv`.
+3. Uruchomić pilotaż E1 na runnerze GitHub (workflow „Pilotaż (E1)”) — wynik przesądza o dalszym zakresie.
 
 ## 11. Stan realizacji (04.11.2026)
 
@@ -292,8 +298,8 @@ Zrobione w kodzie — wszystko offline, bez kontaktu z Booking:
 
 | Etap | Stan | Uwagi |
 |---|---|---|
-| E0 | ✅ kod | Szkielet, `ci.yml`, akcje przypięte do SHA. **Do zrobienia przez właściciela:** repozytorium prywatne (B1), limit wydatków (D2). |
-| E1 | 🟡 narzędzia gotowe | `spike/probe.py` i workflow „Pilotaż (E1)”. Czeka na D1, D2, D4 i D9. |
+| E0 | ✅ kod | Szkielet, `ci.yml`, akcje przypięte do SHA. Repozytorium publiczne (D1), `redaction.py`, testy wyzwalaczy (R10). **Do zrobienia przez właściciela:** reguły gałęzi (R7), zatwierdzanie workflow z forków (R10). |
+| E1 | 🟡 próba wstępna | `spike/probe.py` i workflow „Pilotaż (E1)”. Próba z chmury (nie z runnera GitHub), 04.11.2026, 2 oferty × 8 odczytów: strona oferty ładuje się, wyzwanie AWS WAF przechodzi samo, **ale Booking przekierowuje (301) adres z parametrami na adres bez dat, gości i waluty** — brak tabeli cen. Poprawiony fałszywy alarm blokady (`PARSER_VERSION` 0.1.1). Czeka na D9 i pilotaż na runnerze GitHub. |
 | E2 | ✅ | Konfiguracja, okno dat, harmonogram, ceny, normalizacja i kontrola kontekstu, z testami. |
 | E3 | 🟡 | Provider Playwright i parser na **syntetycznych** próbkach. Selektory oznaczone „DO WERYFIKACJI W E1” w `parsing/selectors.py`; po pilotażu trzeba je podmienić na zanonimizowane prawdziwe próbki. |
 | E4 | ✅ | Gałąź `monitor-data`, partie JSONL.gz z sumami kontrolnymi, odtwarzanie SQLite, `init-data`. |

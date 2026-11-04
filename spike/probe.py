@@ -27,6 +27,7 @@ from booking_monitor.models import PageContext, ParsedPage, StayQuery, Technical
 from booking_monitor.parsing import PARSER_VERSION, parse_property_page
 from booking_monitor.providers.base import FetchError
 from booking_monitor.providers.booking_browser import BookingBrowserProvider
+from booking_monitor.redaction import scrub_html
 from booking_monitor.storage.state import CompetitorSnapshot
 
 EXIT_BLOCKED = 3
@@ -312,7 +313,7 @@ def main(argv: list[str] | None = None) -> int:
                 )
             else:
                 stem = f"{nr:03d}_{competitor.competitor_id}_{query.checkin}_{query.nights}n"
-                (pages / f"{stem}.html").write_text(snapshot.html, encoding="utf-8")
+                (pages / f"{stem}.html").write_text(scrub_html(snapshot.html), encoding="utf-8")
                 provider.save_screenshot(pages / f"{stem}.png")
                 parsed = parse_property_page(snapshot.html, url=snapshot.requested_url)
                 reason = parsed.technical_reason

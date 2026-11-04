@@ -1,5 +1,7 @@
 # Pilotaż E1 (PLAN_DZIALANIA.md): kilka odczytów Booking.com na runnerze GitHub.
 # Uruchamiany wyłącznie ręcznie. Wynik trafia do krótkotrwałego artefaktu (7 dni).
+# Repozytorium jest publiczne: artefakt może pobrać każdy, dlatego zapisany HTML
+# przechodzi przez redaction.scrub_html (bez identyfikatora sesji i tokenów).
 name: Pilotaż (E1)
 
 on:
@@ -31,12 +33,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
-      - name: Wymagaj prywatnego repozytorium
-        if: ${{ !github.event.repository.private }}
-        run: |
-          echo "::error::Repozytorium jest publiczne — wyniki pilotażu byłyby jawne (PLAN_DZIALANIA.md, B1)."
-          exit 1
-
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false

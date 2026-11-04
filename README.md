@@ -1,15 +1,16 @@
 # Booking monitor
 
-Prywatny monitor cen konkurencji z Booking.com dla jednego apartamentu. Co 3 dni
+Monitor cen konkurencji z Booking.com dla jednego apartamentu. Co 3 dni
 sprawdza wszystkie daty przyjazdu w kolejnych 3 miesiącach dla pobytów 2/3/4-nocnych
 i publikuje raport HTML/CSV w GitHub Actions.
 
 - Architektura: [ARCHITEKTURA.md](ARCHITEKTURA.md)
 - Plan wdrożenia, decyzje i ryzyka: [PLAN_DZIALANIA.md](PLAN_DZIALANIA.md)
 
-> **Repozytorium musi być prywatne**, zanim trafi tu lista konkurentów albo zostanie
-> zainicjalizowana gałąź `monitor-data` (PLAN_DZIALANIA.md, B1). Workflow zbierające
-> same się zatrzymają, jeśli repozytorium jest publiczne.
+> **Repozytorium jest publiczne** (PLAN_DZIALANIA.md, D1). Jawne są lista konkurentów,
+> gałąź `monitor-data` z historią cen, logi i artefakty Actions. Nie wpisuj do konfiguracji
+> danych osobowych ani sekretów. HTML stron zapisywany w diagnostyce jest czyszczony
+> z identyfikatora sesji i tokenów (`redaction.py`).
 
 ## Jak to działa
 
@@ -33,6 +34,7 @@ zdarzeń JSONL.gz). Baza SQLite jest odtwarzana z niej przy każdym uruchomieniu
 | `providers/`, `parsing/` | Playwright + Chromium, parser strony oferty |
 | `prices.py`, `normalization.py`, `observation.py` | pełna cena pobytu, wybór taryf, interpretacja odczytu |
 | `storage/`, `github_state.py` | partie zdarzeń, pliki stanu, SQLite, zapis na gałąź danych |
+| `redaction.py` | usuwanie danych sesji z HTML i adresów przed zapisem (repozytorium publiczne) |
 | `analytics.py`, `reporting/` | statystyki i raporty |
 | `workflow.py`, `cli.py` | operacje gate/prepare/collect/finalize i komendy `booking-monitor` |
 
@@ -55,7 +57,12 @@ Testy są offline: nie łączą się z Booking. Testy wymagające przeglądarki 
 
 ## Wdrożenie (PLAN_DZIALANIA.md, E0–E7)
 
-1. Zmień widoczność repozytorium na **prywatną** i ustaw limit wydatków na Actions.
+1. Ustawienia publicznego repozytorium (PLAN_DZIALANIA.md, R7 i R10):
+   - *Settings → Rules → Rulesets*: dla `main` i `monitor-data` włącz *Restrict deletions*
+     i *Block force pushes*. Na `monitor-data` **nie** włączaj wymogu pull requestu —
+     tam zapisuje workflow;
+   - *Settings → Actions → General*: zatwierdzanie workflow z pull requestów od
+     zewnętrznych współtwórców, domyślne uprawnienia `GITHUB_TOKEN` tylko do odczytu.
 2. Uzupełnij `config/settings.yaml` (profil gości) i `config/competitors.csv`
    (adresy ofert `https://www.booking.com/hotel/...`). Sprawdź konfigurację:
 
@@ -90,6 +97,9 @@ Testy są offline: nie łączą się z Booking. Testy wymagające przeglądarki 
   e-mail. Po sprawdzeniu przyczyny: *Run workflow* → `mode: unblock` i zaznacz
   `confirm_unblock`. Monitor nie próbuje obchodzić blokad.
 - **Zmiana listy konkurentów lub profilu** obowiązuje od następnego cyklu.
+- **Harmonogram wyłączony przez GitHub:** w repozytoriach publicznych GitHub wyłącza
+  zaplanowane workflow po 60 dniach bez aktywności i wysyła e-mail. Włączasz je w *Actions*
+  → „Monitor konkurencji” → *Enable workflow*.
 - **Lokalna kopia bazy** (np. do własnych analiz):
 
   ```bash

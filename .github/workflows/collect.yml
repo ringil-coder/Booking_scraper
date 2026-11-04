@@ -2,6 +2,8 @@
 #
 # Codzienna kontrola terminu jest krótka: bez przeglądarki i bez wejścia na Booking.
 # Zbieranie zapisuje wyłącznie gałąź danych `monitor-data`; kod na `main` jest tylko czytany.
+# Repozytorium jest publiczne (D1): dane, logi i artefakty są jawne. Wyzwalacze to wyłącznie
+# harmonogram i ręczne uruchomienie — PR z forka nie uruchomi zbierania (test statyczny).
 name: Monitor konkurencji
 
 on:
@@ -41,11 +43,6 @@ jobs:
       cycle_date: ${{ steps.gate.outputs.cycle_date }}
       unblock: ${{ steps.gate.outputs.unblock }}
     steps:
-      - name: Wymagaj prywatnego repozytorium
-        if: ${{ !github.event.repository.private }}
-        run: |
-          echo "::error::Repozytorium jest publiczne — dane konkurencji i raporty byłyby jawne (PLAN_DZIALANIA.md, B1)."
-          exit 1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1

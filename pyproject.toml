@@ -1,7 +1,7 @@
 [project]
 name = "booking-monitor"
 version = "0.1.0"
-description = "Prywatny monitor cen konkurencji Booking.com dla jednego apartamentu"
+description = "Monitor cen konkurencji Booking.com dla jednego apartamentu"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [

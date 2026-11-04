@@ -5,8 +5,10 @@ bramka GO/NO-GO). Nie jest częścią cyklu produkcyjnego i nie działa w CI.
 
 ## Warunki wstępne
 
-1. Repozytorium jest **prywatne** (B1). Workflow `spike.yml` zatrzyma się, jeśli nie jest.
-2. Podjęta decyzja D9 (ryzyko regulaminowe) i ustawiony limit wydatków Actions (D2).
+1. Repozytorium jest **publiczne** (D1), więc artefakt pilotażu jest jawny. HTML stron
+   zapisujemy bez identyfikatora sesji i tokenów (`redaction.scrub_html`); zrzuty ekranu
+   pokazują stronę tak, jak widzi ją każdy niezalogowany gość.
+2. Podjęta decyzja D9 (ryzyko regulaminowe).
 3. `config/competitors.csv` zawiera 2–3 prawdziwe adresy ofert (bez placeholderów),
    a `config/settings.yaml` — właściwy profil gości (D3).
 
@@ -58,7 +60,8 @@ Wynik lokalny nie potwierdza działania na runnerze (inny adres IP, A§10).
 - co najmniej 95% odczytów bez błędu technicznego (`success_rate`);
 - ceny zgodne z kontrolą ręczną lub różnice wyjaśnione;
 - `estimate.hours_per_cycle_p95` ≤ 48 (`cycle_fits_48h_p95 = true`);
-- `estimate.minutes_per_30_days_p95` mieści się w budżecie D2.
+- `estimate.minutes_per_30_days_p95` — tylko informacyjnie: w repozytorium publicznym
+  standardowe runnery są bezpłatne (PLAN_DZIALANIA.md, B2).
 
 Zanonimizowane próbki HTML (bez cookies i identyfikatorów sesji) z pilotażu należy
 dodać do `tests/fixtures/booking/` i dopasować `src/booking_monitor/parsing/selectors.py`.

@@ -1,4 +1,4 @@
-"""Statyczne kontrole workflow GitHub Actions (A§6, A§12, A§13, R7)."""
+"""Statyczne kontrole workflow GitHub Actions (A§6, A§12, A§13, R7, D1)."""
 
 from __future__ import annotations
 
@@ -75,3 +75,31 @@ def test_collect_contract():
 
 def test_data_branch_is_never_code_branch():
     assert load_settings(ROOT / "config").storage.state_branch == "monitor-data"
+
+
+# Repozytorium jest publiczne (D1): każdy może otworzyć PR z forka.
+BOOKING_WORKFLOWS = ("collect.yml", "spike.yml")
+
+
+@pytest.mark.parametrize("name", BOOKING_WORKFLOWS)
+def test_booking_workflows_only_manual_or_scheduled(name):
+    # PR z forka nie może uruchomić wejścia na Booking ani zapisu gałęzi danych.
+    workflow = load(ROOT / ".github" / "workflows" / name)
+    assert set(triggers(workflow)) <= {"schedule", "workflow_dispatch"}
+
+
+@pytest.mark.parametrize("path", WORKFLOWS, ids=lambda p: p.name)
+def test_no_privileged_pull_request_triggers(path):
+    # pull_request_target / workflow_run uruchamiają kod z uprawnieniami repozytorium.
+    assert not {"pull_request_target", "workflow_run"} & set(triggers(load(path)))
+
+
+def test_ci_for_pull_requests_is_read_only_without_credentials():
+    workflow = load(ROOT / ".github" / "workflows" / "ci.yml")
+    assert "pull_request" in triggers(workflow)
+    for job in workflow["jobs"].values():
+        assert "permissions" not in job
+        checkout = next(
+            s for s in job["steps"] if str(s.get("uses", "")).startswith("actions/checkout@")
+        )
+        assert checkout.get("with", {}).get("persist-credentials") is False
