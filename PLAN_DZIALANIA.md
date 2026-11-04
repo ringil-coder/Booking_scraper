@@ -285,3 +285,26 @@ Propozycje do naniesienia w `ARCHITEKTURA.md` po akceptacji:
 1. Zmienić widoczność repozytorium na prywatną (B1) i ustawić limit wydatków na Actions (D2).
 2. Podjąć decyzję D9 i przekazać 2–3 adresy konkurentów oraz profil gości (D3, D4).
 3. Wykonać E0, a potem od razu E1 — wynik pilotażu przesądza o dalszym zakresie i koszcie.
+
+## 11. Stan realizacji (04.11.2026)
+
+Zrobione w kodzie — wszystko offline, bez kontaktu z Booking:
+
+| Etap | Stan | Uwagi |
+|---|---|---|
+| E0 | ✅ kod | Szkielet, `ci.yml`, akcje przypięte do SHA. **Do zrobienia przez właściciela:** repozytorium prywatne (B1), limit wydatków (D2). |
+| E1 | 🟡 narzędzia gotowe | `spike/probe.py` i workflow „Pilotaż (E1)”. Czeka na D1, D2, D4 i D9. |
+| E2 | ✅ | Konfiguracja, okno dat, harmonogram, ceny, normalizacja i kontrola kontekstu, z testami. |
+| E3 | 🟡 | Provider Playwright i parser na **syntetycznych** próbkach. Selektory oznaczone „DO WERYFIKACJI W E1” w `parsing/selectors.py`; po pilotażu trzeba je podmienić na zanonimizowane prawdziwe próbki. |
+| E4 | ✅ | Gałąź `monitor-data`, partie JSONL.gz z sumami kontrolnymi, odtwarzanie SQLite, `init-data`. |
+| E5 | ✅ offline | Runner z checkpointami, `collect.yml`. Odblokowanie (D7) jako tryb `unblock` z potwierdzeniem. Pełny cykl przetestowany na lokalnym `origin`. |
+| E6 | ✅ | Raport HTML (offline, jasny i ciemny motyw), CSV, podsumowanie Actions. Kopia SQLite tylko w artefakcie zakończonego cyklu. |
+| E7 | ⏳ | Wymaga wyników E1 i prawdziwej listy konkurentów. |
+
+Decyzje przyjęte w implementacji (do potwierdzenia):
+
+- Po zainicjalizowaniu stanu kalendarz slotów wyznacza `scheduler.json`. Zmiana `anchor_at_utc` w ustawieniach daje tylko ostrzeżenie (A§6).
+- Seria 5 błędów parsera blokuje cykl tak samo jak CAPTCHA (`blocked`, powód `parse_errors`). Wznowienie wymaga trybu `unblock`.
+- Zadanie o nieznanym typie lokalu (`is_entire_apartment = null`) jest traktowane jako pasujące, bo konkurentów wskazuje ręcznie właściciel. Pokój rozpoznany po nazwie nie pasuje.
+- Ponowienia mają rosnącą przerwę: 60 s, potem 120 s. Spośród gotowych zadań zawsze wykonujemy najwcześniejsze w planie.
+- `schedule.enabled: false` w repozytorium. Produkcję włącza się dopiero po E1 i `init-data`.

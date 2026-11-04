@@ -385,15 +385,26 @@ def finalize(
         cycle_id=cycle_id, status=status, job_counts=counts, expired_now=len(expired)
     )
     if out_dir is not None:
+        from booking_monitor.analytics import build_cycle_report
         from booking_monitor.reporting.bundle import build_report_bundle, latest_report_entry
         from booking_monitor.reporting.summary import render_summary_markdown
 
         tz = ZoneInfo(manifest.report_timezone)
-        bundle = build_report_bundle(conn, cycle_id, out_dir, now=now, tz=tz, run=run)
-        write_model(layout.latest_report_file, latest_report_entry(bundle))
-        from booking_monitor.analytics import build_cycle_report
-
         report = build_cycle_report(conn, cycle_id, now=now, tz=tz)
+        bundle = build_report_bundle(
+            conn,
+            cycle_id,
+            out_dir,
+            now=now,
+            tz=tz,
+            run=run,
+            # Pełna kopia bazy (dziesiątki MB przy pełnej skali) tylko dla zakończonego cyklu,
+            # żeby codzienne wznowienia nie mnożyły dużych artefaktów.
+            include_sqlite=finished,
+            artifact_name=artifact_name,
+            report=report,
+        )
+        write_model(layout.latest_report_file, latest_report_entry(bundle))
         result.summary_markdown = render_summary_markdown(report, artifact_name=artifact_name)
         result.report_dir = out_dir
     repo.commit_and_push(f"finalizacja {cycle_id}: {status}")

@@ -69,7 +69,7 @@ Testy są offline: nie łączą się z Booking. Testy wymagające przeglądarki 
    uv run booking-monitor estimate --seconds 15
    ```
 
-4. Pilotaż techniczny (E1): workflow **Pilotaż Booking** (`spike.yml`) uruchamiany ręcznie,
+4. Pilotaż techniczny (E1): workflow **Pilotaż (E1)** (`spike.yml`) uruchamiany ręcznie,
    opis w `spike/README.md`. Wynik decyduje o dalszym zakresie (GO/NO-GO).
 5. Inicjalizacja gałęzi danych — jednorazowo, z komputera z dostępem do repozytorium:
 

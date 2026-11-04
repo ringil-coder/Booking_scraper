@@ -230,9 +230,19 @@ def test_full_cycle_across_partial_runs(env):
     assert all(r.checkpoints >= 2 for r in results)
 
     first = finalize(
-        env.ws, env.settings, cycle_id=prepared.cycle_id, now=env.time.now, run=RUN, out_dir=None
+        env.ws,
+        env.settings,
+        cycle_id=prepared.cycle_id,
+        now=env.time.now,
+        run=RUN,
+        out_dir=env.tmp / "report-partial",
+        artifact_name="raport-test",
     )
     assert first.status is CycleStatus.PARTIAL
+    partial_files = {p.name for p in (env.tmp / "report-partial").iterdir()}
+    assert {"report.html", "prices.csv", "manifest.json"} <= partial_files
+    assert "monitor.sqlite3" not in partial_files  # pełna kopia bazy tylko po zakończeniu cyklu
+    assert first.summary_markdown and "raport-test" in first.summary_markdown
 
     # Kolejna kontrola (nawet przy nowym slocie) wznawia ten sam cykl zamiast otwierać drugi.
     env.time.advance(72 * 3600)
@@ -249,7 +259,7 @@ def test_full_cycle_across_partial_runs(env):
             cycle_id=prepared.cycle_id,
             now=env.time.now,
             run=RUN,
-            out_dir=None,
+            out_dir=env.tmp / "report-final",
         )
         if done.status is not CycleStatus.PARTIAL:
             break
@@ -261,6 +271,10 @@ def test_full_cycle_across_partial_runs(env):
     assert state.active_cycle_id is None and state.last_finished_cycle_id == prepared.cycle_id
     completed = count(conn, "SELECT COUNT(*) FROM jobs WHERE status='completed'")
     assert completed == JOBS
+    assert (env.tmp / "report-final" / "monitor.sqlite3").exists()
+    assert layout.latest_report_file.exists()
+    html = (env.tmp / "report-final" / "report.html").read_text(encoding="utf-8")
+    assert "Mój apartament" in html and prepared.cycle_id in html
     assert count(conn, "SELECT COUNT(*) FROM attempts") == completed == observer.calls
     assert count(conn, "SELECT COUNT(*) FROM observations") == completed
 
