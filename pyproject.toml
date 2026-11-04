@@ -1,0 +1,48 @@
+[project]
+name = "booking-monitor"
+version = "0.1.0"
+description = "Prywatny monitor cen konkurencji Booking.com dla jednego apartamentu"
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "pydantic>=2.9",
+    "pyyaml>=6.0",
+    "python-dateutil>=2.9",
+    "jinja2>=3.1",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.3",
+    "playwright>=1.48",
+]
+
+[project.scripts]
+booking-monitor = "booking_monitor.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.8",
+    "time-machine>=2.15",
+]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/booking_monitor"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers -m 'not browser'"
+markers = [
+    "browser: wymaga Chromium (Playwright); pomijane w zwykłym CI",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["RUF001", "RUF002", "RUF003"]

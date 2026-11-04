@@ -1,0 +1,58 @@
+# Konfiguracja monitora — kontrakt z ARCHITEKTURA.md §12.
+# Zmiany obowiązują od następnego cyklu (manifest cyklu jest zamrożony).
+report_timezone: Europe/Warsaw
+
+own_apartment:
+  id: moj_apartament
+  name: Mój apartament
+  booking_url: null
+
+profile:
+  adults: 2
+  children_ages: []
+  units: 1
+  currency: PLN
+  locale: pl-PL
+  device: desktop
+  logged_in: false
+  accommodation_type: entire_apartment
+
+collection:
+  provider: booking_browser
+  horizon_months: 3
+  stay_nights: [2, 3, 4]
+  refresh_mode: full_cycle
+
+schedule:
+  # Przełącznik produkcyjny. Dopóki false, kontrola terminu nic nie pobiera
+  # (PLAN_DZIALANIA.md, E7). Włączyć po pilotażu i inicjalizacji monitor-data.
+  enabled: false
+  interval_hours: 72
+  # Kilka minut przed godziną crona, aby kontrola nie wypadała na granicy slotu (D6).
+  anchor_at_utc: '2026-11-07T05:00:00Z'
+  gate_cron_utc: '17 5 * * *'
+
+execution:
+  parallel_jobs: 1
+  browser_pages: 1
+  navigation_timeout_seconds: 45
+  min_navigation_interval_seconds: 10
+  max_attempts: 3
+  retry_base_delay_seconds: 60
+  max_inline_retry_wait_seconds: 300
+  collection_budget_minutes_per_job: 240
+  job_timeout_minutes: 300
+  checkpoint_interval_minutes: 15
+  checkpoint_max_observations: 100
+  max_consecutive_parse_errors: 5
+  # Parametry planowania okien roboczych; aktualizować po pilotażu (E1).
+  estimated_observation_seconds_p95: 20
+  planning_margin: 0.25
+  max_windows_per_run: 12
+
+storage:
+  state_branch: monitor-data
+  working_database: .runtime/monitor.sqlite3
+  history_retention_days: 365
+  report_artifact_retention_days: 30
+  diagnostics_artifact_retention_days: 7
