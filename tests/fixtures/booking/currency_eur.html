@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<!-- SYNTETYCZNA PRÓBKA — nie pochodzi z booking.com. Do weryfikacji w E1.
+     Scenariusz: żądano PLN, a strona wyrenderowała ceny w EUR (→ context_mismatch w potoku). -->
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <title>Apartamenty Testowe Centrum – ceny</title>
+</head>
+<body>
+  <header><button data-testid="header-currency-picker-trigger">EUR</button></header>
+  <form>
+    <input type="hidden" name="hotel_id" value="1234567">
+    <input type="hidden" name="checkin" value="2026-11-20">
+    <input type="hidden" name="checkout" value="2026-11-23">
+    <input type="hidden" name="group_adults" value="2">
+    <input type="hidden" name="group_children" value="0">
+    <input type="hidden" name="no_rooms" value="1">
+    <input type="hidden" name="selected_currency" value="EUR">
+  </form>
+  <table id="hprt-table">
+    <tbody>
+      <tr class="js-rt-block-row" data-block-id="123456701_900001_2_0_0">
+        <td class="hprt-table-cell-roomtype"><span class="hprt-roomtype-icon-link">Apartament z 1 sypialnią</span></td>
+        <td class="hprt-table-cell-occupancy"><span class="bui-u-sr-only">Maks. liczba osób: 4</span></td>
+        <td class="hprt-table-cell-price">
+          <div class="bui-price-display__value">€&nbsp;245</div>
+          <div class="prd-taxes-and-fees-under-price">Zawiera podatki i opłaty</div>
+        </td>
+        <td class="hprt-table-cell-conditions"><ul><li>Bezzwrotna</li></ul></td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<!-- SYNTETYCZNA PRÓBKA — nie pochodzi z booking.com. Do weryfikacji w E1.
+     Scenariusz: strona sygnalizuje dodatkowe opłaty bez kwoty (cena niepełna), taryfa
+     częściowo zwrotna. Kontekst tylko z wyświetlanych pól wyszukiwarki (bez ukrytych pól). -->
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <title>Domek Testowy nad Jeziorem</title>
+</head>
+<body>
+  <header>
+    <button data-testid="header-currency-picker-trigger">PLN</button>
+  </header>
+  <div class="sb-searchbox">
+    <button data-testid="date-display-field-start">pt., 20 lis 2026</button>
+    <button data-testid="date-display-field-end">pon., 23 lis 2026</button>
+    <button data-testid="occupancy-config">2 dorosłych · 0 dzieci · 1 pokój</button>
+  </div>
+  <div id="hotel-wrapper" data-hotel-id="3330001">
+    <h2 class="pp-header__title">Domek Testowy nad Jeziorem</h2>
+  </div>
+  <table id="hprt-table">
+    <tbody>
+      <tr class="js-rt-block-row" data-block-id="333000101_600001_2_0_0">
+        <td class="hprt-table-cell-roomtype"><span class="hprt-roomtype-icon-link">Domek letniskowy</span></td>
+        <td class="hprt-table-cell-occupancy"><span class="bui-u-sr-only">Maks. liczba osób: 5</span></td>
+        <td class="hprt-table-cell-price">
+          <div class="bui-price-display__value">zł 900</div>
+          <div class="prd-taxes-and-fees-under-price">Mogą obowiązywać dodatkowe podatki i opłaty</div>
+        </td>
+        <td class="hprt-table-cell-conditions">
+          <ul><li>Częściowo zwrotna – opłata za odwołanie 30%</li></ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>
