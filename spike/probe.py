@@ -117,6 +117,22 @@ def summarize_offers(parsed: ParsedPage) -> list[dict]:
     ]
 
 
+def console_detail(record: dict) -> str:
+    """Krótki opis odczytu do konsoli: czy strona ma daty, najniższa cena albo przyczyna błędu."""
+    context = record.get("context")
+    if context is None:
+        return (record.get("message") or "")[:100]
+    dates = "tak" if context.get("checkin") and context.get("checkout") else "NIE"
+    parts = [f"daty na stronie: {dates}", f"waluta: {context.get('currency') or '?'}"]
+    prices = [o["displayed_price"] for o in record.get("offers") or []]
+    if prices:
+        currency = record["offers"][0]["currency"]
+        parts.append(f"ofert: {len(prices)}, od {min(prices):.2f} {currency}")
+    elif record.get("message"):
+        parts.append(record["message"][:80])
+    return " | ".join(parts)
+
+
 def percentile(values: list[float], fraction: float) -> float | None:
     if not values:
         return None
@@ -340,7 +356,8 @@ def main(argv: list[str] | None = None) -> int:
             log.flush()
             print(
                 f"[{nr}/{len(queries)}] {competitor.competitor_id} {query.checkin} "
-                f"{query.nights}n → {record['outcome']} ({record['seconds']:.1f} s)",
+                f"{query.nights}n → {record['outcome']} ({record['seconds']:.1f} s) "
+                f"| {console_detail(record)}",
                 flush=True,
             )
             if record.get("technical_reason") == TechnicalReason.BLOCKED.value:

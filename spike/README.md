@@ -26,13 +26,62 @@ Actions → „Pilotaż (E1)” → Run workflow. Parametry:
 Domyślnie 4 daty × 3 długości × 2–3 oferty = 24–36 odczytów, czyli przy odstępie 10 s
 kilka–kilkanaście minut. Wynik: artefakt `pilotaz-<run_id>` (7 dni).
 
-## Uruchomienie lokalne (tylko do uruchomienia kodu, nie jako wynik pilotażu)
+## Uruchomienie na własnym komputerze (pilotaż po NO-GO runnera)
 
-```bash
-BOOKING_MONITOR_CHROMIUM=/ścieżka/do/chrome uv run python spike/probe.py --competitor all --sample 4 --nights 2 3 4 --out spike/output
+Na runnerze GitHub (04.11.2026) Booking przekierowywał każdy adres z datami na stronę
+bez dat (PLAN_DZIALANIA.md, E1). Ten test sprawdza, czy z domowego łącza jest inaczej.
+Dwa krótkie przebiegi po 4 odczyty (2 oferty × 2 daty, pobyt 2-nocny), każdy około minuty.
+
+Wymagania: [uv](https://docs.astral.sh/uv/) i Git (albo pobrany ZIP gałęzi).
+
+Instalacja uv — Windows (PowerShell):
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-Wynik lokalny nie potwierdza działania na runnerze (inny adres IP, A§10).
+Instalacja uv — macOS / Linux:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Kod i przeglądarka (te same polecenia na każdym systemie; uv sam pobierze Pythona 3.12):
+
+```bash
+git clone -b claude/relaxed-knuth-y8utuf https://github.com/ringil-coder/Booking_scraper.git
+```
+
+```bash
+cd Booking_scraper
+```
+
+```bash
+uv sync
+```
+
+```bash
+uv run playwright install chromium
+```
+
+Przebieg 1 — bez okna, jak na serwerze:
+
+```bash
+uv run python spike/probe.py --competitor oxygen_residence --competitor smart_apartment_ogrodowa --sample 2 --nights 2 --out spike/output/bez-okna
+```
+
+Przebieg 2 — z widocznym oknem przeglądarki (nie klikaj w nie w trakcie):
+
+```bash
+uv run python spike/probe.py --competitor oxygen_residence --competitor smart_apartment_ogrodowa --sample 2 --nights 2 --headed --out spike/output/z-oknem
+```
+
+Każda linia wyniku mówi, czy strona zachowała daty, np.
+`[1/4] oxygen_residence 2026-11-06 2n → available (9.8 s) | daty na stronie: tak | waluta: PLN | ofert: 3, od 812.00 PLN`
+albo `… → parse_error … | daty na stronie: NIE | …`. Zrzuty stron są w `spike/output/*/pages/`.
+
+Kod CLI nie zależy od Actions (PLAN_DZIALANIA.md, P1), więc przy wyniku pozytywnym ten sam
+monitor można uruchamiać z harmonogramu systemu (Harmonogram zadań Windows, cron, launchd).
 
 ## Zawartość wyniku
 
